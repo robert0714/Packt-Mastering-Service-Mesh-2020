@@ -71,7 +71,7 @@ namespace, which we will use for the Istio installation:
 
 ```
 $ kubectl create clusterrolebinding istio-system-cluster-rolebinding  \
-   --clusterrole=cluster-admin --serviceaccount=istiosystem:default
+   --clusterrole=cluster-admin --serviceaccount=istio-system:default
 ```
 
 ## Install the Istio CRDs and re-initialize **tiller** to include the **istio-system** namespace. In the upcoming release for Helm version 3, the dependency
@@ -142,7 +142,7 @@ The helm install consists of two tasks:
 ### First, create the custom resource definitions required by Istio
 ```
 $ cd ~/istio-$ISTIO_VERSION/install/kubernetes/helm
-$ helm install ./istio-init --name istio-init --namespace istiosystem
+$ helm install ./istio-init --name istio-init --namespace istio-system
 ```
 ### Next, run the helm install command to install istio-demo (permissive mutual TLS) 
 ```
