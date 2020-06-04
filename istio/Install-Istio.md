@@ -190,24 +190,44 @@ Verifying our installation is important to ensure that we have got everything ri
 $ istioctl version --short
 ```
 
-### Check pods The Istio resources are created in the istio-system namespace. Check the
-status of the Istio pods
+### Check pods The Istio resources are created in the istio-system namespace. Check the status of the Istio pods
 ```
 $ kubectl -n istio-system get pods
 ```
+The pods showing the status of **Completed** are the ones that ran a job successfully. All other pods should show the **Running** status.  
+Note from the preceding output that the Istio control plane consists of three  components. They are as follows:  
+*  **Citadel**: istio-citadel provides service-to-service and end-user authentication, with built-in identity and credential management.
+*  **Mixer**: Mixer consists of istio-policy, istio-telemetry, and istiogalley.
+*  **Pilot**: Pilot is istio-pilot. 
 
-## Installing a load balancer
+**Istio-ingressgateway** and **istio-egressgateway** are platform-independent inbound and outbound traffic gateways. Prometheus, Kiali, and Grafana are backend services for metering and monitoring.
 
-### Make sure that ip_vs is installed and label the node
-```
+# Installing a load balancer
+Managed Kubernetes services such as Google or IBM Cloud will provide an external load balancer. Since our Kubernetes environment is standalone, we do not have an external load balancer; we install and use **keepalived** as a load balancer.
+
+The keepalived load balancer depends on the **ip_vs** kernel module to be loaded. Follow these steps:
+
+### Make sure that the ip_vs kernel module is loaded
+```sh
 $ sudo lsmod | grep ^ip_vs
-
+```
+### If the preceding does not show any output, load the module
+```ssh
 $ sudo ipvsadm -ln
+```
+Run **sudo lsmod | grep ^ip_vs** to make sure that the module is loaded.
+### Add ip_vs to the module list so that it is loaded automatically on reboot
 
+```sh
 $ echo "ip_vs" | sudo tee /etc/modules-load.d/ipvs.conf
-
+```
+### The **keepalived** helm chart requires that the node be labeled as **proxy=true** so that it can deploy the daemon set on this master node:
+```ssh
 $ kubectl label node osc01.servicemesh.local proxy=true
+```
 
+### Install keepalived through a helm chart from https://github.com/servicemeshbook/keepalived
+```ssh
 $ helm repo add kaal https://servicemeshbook.github.io/keepalived
 
 $ helm repo update
@@ -231,75 +251,105 @@ $ helm install kaal/keepalived --name keepalived \
 --set nameOverride="lb"
 ```
 
-### Check pods
+### Check pods. After creating the preceding helm chart, test the readiness and status of pods in the keepalived namespace
 
 ```
 $ kubectl -n keepalived get pods
 ```
 
-### Check services
+### Check services. Once the keepalived load balancer is working, check the status of the Istio services, and you should see that the Istio ingress gateway now has an external IP address assigned
 
 ```
 $ kubectl -n istio-system get services
 ```
+All services should have **cluster-ip** except **jaeger-agent** and **istio-ingressgateway**.They might show as <pending> initially, and **keepalivd** will provide an IP address from a subnet range that we provided to the helm install command. Note the external IP address assigned by the load balancer to **istio-ingressgateway** is **192.168.142.249** , but this could be different in your case.
+   
+When no external load balancer is used, the node port of the service or port forwarding can be used to run the application from outside the cluster.
 
-## Enabling Istio
+Next, we enable Istio for existing applications by injecting a sidecar proxy—which may result in a very short outage of the application as pods need to restart. We will also learn how to enable new applications to get a sidecar proxy injected automatically.
 
-### For an existing application
+# Enabling Istio
+In the previous chapter, we deployed the *Bookinfo* sample microservice in the **istio-lab** namespace. Run **kubectl -n istio-lab get pods** and notice that each pod is running only one container for every microservice.
 
-```
+## For an existing application
+To enable Istio for an existing application, we will use **istioctl** to generate additional artifacts in **bookinfo.yaml**, so the sidecar proxy is added to every pod.  
+
+### First, generate modified YAML with a sidecar proxy for the Bookinfo application
+```ssh
 $ cd ~/servicemesh
 $ istioctl kube-inject -f bookinfo.yaml > bookinfo_proxy.yaml
 $ cat bookinfo_proxy.yaml
 ```
 
-### Check the differences in yaml generated
+### Check the differences in yaml generated. Do diff on the original and modified file to see the additions to the YAML file by the istioctl command
 
 ```
 $ diff -y bookinfo.yaml bookinfo_proxy.yaml
 ```
-
-### Deploy bookinfo
+The new definition of the sidecar proxy will be added to the YAML file.
+### Deploy bookinfo. Deploy the modified **bookinfo_proxy.yaml** file to inject a sidecar proxy into the existing **bookinfo** microservice
 
 ```
 $ kubectl -n istio-lab apply -f bookinfo_proxy.yaml
 ```
 
-### Check pods
-
-```
+### Check pods .Wait a few minutes for the existing pods to terminate and for the new pods to be ready. The output should look similar to the following
+```ssh
 $ kubectl -n istio-lab get pods
 ```
+Notice that each pod has two running containers since a sidecar proxy was added through the modified YAML.
+It is possible to select microservices to not have a sidecar by editing the generated YAML through the istioctl command.
 
-### For a new application
+## Enabling Istio for new applications
+To show how to enable sidecar injection automatically, we will delete the existing **istio-lab** namespace, and we will redeploy **bookinfo** so that Istio is automatically enabled with the proxy for the new application. Follow these steps
 
-
-#### Delete, create and label the namespace
-
-```
+### Delete, create and label the namespace
+```ssh
 $ kubectl delete namespace istio-lab
-
+```
+### Now, create the istio-lab namespace again and label it using istio-injection=enabled
+```ssh 
 $ kubectl create namespace istio-lab
 
 $ kubectl label namespace istio-lab istio-injection=enabled
 ```
-
+By labeling an **istio-injection=enabled** namespace, the Istio sidecar gets injected automatically when the application is deployed using **kubectl apply** or the **helm** command.
 ### Deploy application
-```
+```ssh
 $ kubectl -n istio-lab apply -f ~/servicemesh/bookinfo.yaml
 ```
+Run **kubectl -n istio-lab get pods** and wait for them to be ready. You will notice that each pod has two containers, and one of them is the sidecar.  
+Run **istioctl proxy-status**, which provides the sync status from pilot to each proxy in the mesh
 
-## Horizontal Pod Scaling
+Now that Istio has been enabled, we are ready to learn about its capabilities using examples from https://istio.io . In the next section, we will set up horizontal pod scaling for Istio services.
 
+## Setting up horizontal pod scaling
+Each component of Istio has the autoscaling value set to **false** for the **demo** profile (using **install/kubernetes/istio-demo.yaml**). You can set **autoscaleEnabled** to **true** for different components in **install/kubernetes/helm/istio/values-istiodemo.yaml** to enable autoscaling. This configuration may work nicely in production environments based on deployed applications where the autoscaling of pods may help to handle increased workloads.  
+To get the benefits of autoscaling, we should be careful in selecting the applications since autoscaling applications in high-latency environments can make the situation go from bad to worse in handling the increased workload.  
+Pod scaling can be enabled at the time of the Helm installation if the following parameters
+are passed to the **helm install** command using the **--set** argument:
 ```
+mixer.policy.autoscaleEnabled=true
+mixer.telemetry.autoscaleEnabled=true
+mixer.ingress-gateway.autoscaleEnabled=true
+mixer.egress-gateway.autoscaleEnabled=true
+pilot.autoscaleEnabled=true
+```
+
+Follow the steps given here:
+#### Let's check the current autoscaling for every Istio component
+```ssh
 $ kubectl -n istio-system get hpa
 ```
 
-### How to delete HPA
+### How to delete HPA. If pod scaling is enabled, it can be deleted using the following command. In our case, this is not necessary 
 
 ```
 $ kubectl -n istio-system delete hpa --all
+```
+### After deleting auto pod scaling, make sure to set replicas to 1. In our case, it is not necessary
 
+```ssh
 $ kubectl -n istio-system scale deploy istio-egressgateway --replicas=1
 $ kubectl -n istio-system scale deploy istio-ingressgateway --replicas=1
 $ kubectl -n istio-system scale deploy istio-pilot --replicas=1
@@ -307,7 +357,7 @@ $ kubectl -n istio-system scale deploy istio-policy --replicas=1
 $ kubectl -n istio-system scale deploy istio-telemetry --replicas=1
 ```
 
-
+The promise of a service mesh architecture using a solution such as Istio is to effect changes without having to modify the existing application. This is a significant shift in which operations engineers can run modern microservices applications without having to change anything in the code
 
 
 
