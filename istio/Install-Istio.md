@@ -96,8 +96,7 @@ $ helm init --service-account tiller
 $ kubectl get pods -n kube-system | grep tiller
 ```
 
-## Run the following helm template command to generate the yaml file using the default Istio demo configuration parameters defined in values-istiodemo.
-yaml. Next, route the generated output to the kubectl apply command.Helm tiller, which is a server-side component of the helm package manager, is
+## Run the following helm template command to generate the yaml file using the default Istio demo configuration parameters defined in values-istiodemo.yaml. Next, route the generated output to the kubectl apply command.Helm tiller, which is a server-side component of the helm package manager, is
 not used in this case
 
 ```
