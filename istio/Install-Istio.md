@@ -358,7 +358,9 @@ $ kubectl -n istio-system scale deploy istio-telemetry --replicas=1
 
 The promise of a service mesh architecture using a solution such as Istio is to effect changes without having to modify the existing application. This is a significant shift in which operations engineers can run modern microservices applications without having to change anything in the code
 
+### Chapter 09 - Installing Istio
 
+[![asciicast](https://asciinema.org/a/310475.svg)](https://asciinema.org/a/310475)
 
 
 
