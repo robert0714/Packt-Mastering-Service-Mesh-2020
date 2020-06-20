@@ -28,20 +28,20 @@ curl http://httpbin.istio-lab.svc.cluster.local:8000/ip
 curl -s https://api.github.com/repos/smallstep/cli/releases/latest | grep tag_name
 ```
 
-### We will download v0.10.1 version
+### We will download v0.14.4 version
 
 ```
 cd ~/
 
-curl -LOs https://github.com/smallstep/cli/releases/download/v0.13.3/step_0.13.3_linux_amd64.tar.gz
+curl -LOs https://github.com/smallstep/cli/releases/download/v0.14.4/step_linux_0.14.4_amd64.tar.gz
 ```
 
 ### Extract and copy the Step cli to /bin
 
 ```
-tar xvfz step_0.13.3_linux_amd64.tar.gz
+tar xvfz step_linux_0.14.4_amd64.tar.gz
 
-sudo mv step_0.13.3/bin/step /bin
+sudo mv step_0.14.4/bin/step /bin
 ```
 
 ### Create a directory and create a root certificate using root --profile through step command
