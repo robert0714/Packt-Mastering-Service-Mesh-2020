@@ -194,12 +194,17 @@ curl -s http://$INGRESS_HOST/productpage?[1-1000] | grep -c "full stars"
 ## Fault Injection
 
 ### Injecting http delay faults
+You can see the below urls:  
+
+https://github.com/istio/istio/blob/1.4.9/samples/bookinfo/src/reviews/reviews-application/src/main/java/application/rest/LibertyRestEndpoint.java
 
 ### Inject a delay of 7 seconds for the end user jason for the ratings service:
 
 ```
 kubectl -n istio-lab apply -f 08-inject-http-delay-fault.yaml
 ```
+You can see the codes in the 342 line of the below urls:  
+https://github.com/istio/istio/blob/1.4.9/samples/bookinfo/src/productpage/productpage.py
 
 ## Injecting http abort faults
 
@@ -216,7 +221,8 @@ kubectl -n istio-lab apply -f 09-inject-http-abort-fault.yaml
 ```
 kubectl -n istio-lab apply -f 10-set-request-timeout.yaml
 ```
-
+You can see the codes in the 342 line of the below urls:  
+https://github.com/istio/istio/blob/1.4.9/samples/bookinfo/src/productpage/productpage.py
 ### Introduce a 2 seconds latency between reviews and ratings service
 
 ```
@@ -337,6 +343,8 @@ kubectl -n istio-lab exec -it -c ratings $RATING_POD -- curl -LI https://www.cnn
 
 ```
 kubectl -n istio-system get cm istio -o yaml | sed 's/mode: ALLOW_ANY/mode: REGISTRY_ONLY/g' | kubectl replace -n istio-system -f -
+
+kubectl -n istio-system get cm istio -o yaml | sed 's/mode: REGISTRY_ONLY/mode: ALLOW_ANY/g' | kubectl replace -n istio-system -f -
 ```
 
 ### Check if mode: REGISTRY_ONLY has been set
@@ -524,6 +532,11 @@ kubectl -n istio-system get cm istio -o yaml | sed 's/mode: REGISTRY_ONLY/mode: 
 ### Double check if mode: ALLOW_ANY has been set
 ```
 kubectl -n istio-system get cm istio -o yaml | grep -m 1 -o "mode: ALLOW_ANY"
+```
+
+### Delete the services for httpbin
+```
+kubectl -n istio-lab delete -f 23-mirror-traffic-between-v1-and-v2.yaml 
 ```
 
 ### End of Istio Traffic management exercises 
