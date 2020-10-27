@@ -347,6 +347,17 @@ istioctl authn tls-check $PRODUCT_PAGE.istio-lab istio-ingressgateway.istio-syst
 
 istioctl authn tls-check $PRODUCT_PAGE.istio-lab productpage.istio-lab.svc.cluster.local
 ```
+You can see :
+```
+$ istioctl authn tls-check $PRODUCT_PAGE.istio-lab istio-ingressgateway.istio-system.svc.cluster.local
+HOST:PORT                                                  STATUS     SERVER        CLIENT     AUTHN POLICY     DESTINATION RULE
+istio-ingressgateway.istio-system.svc.cluster.local:80     OK         HTTP/mTLS     HTTP       default/         -
+
+$ istioctl authn tls-check $PRODUCT_PAGE.istio-lab productpage.istio-lab.svc.cluster.local
+HOST:PORT                                        STATUS     SERVER        CLIENT     AUTHN POLICY     DESTINATION RULE
+productpage.istio-lab.svc.cluster.local:9080     OK         HTTP/mTLS     mTLS       default/         productpage/istio-lab
+[vagrant@k8s-m1 02-security]
+```
 
 ### The above result shows that traffic between microservices is mTLS
 ### But, traffic at Ingress gateway can be either HTTP or HTTPS due to our definition 
