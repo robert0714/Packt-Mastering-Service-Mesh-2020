@@ -16,6 +16,14 @@ cd scripts/02-security
 ```
 curl http://httpbin.istio-lab.svc.cluster.local:8000/status/418
 ```
+if you encounter  the error " curl: (6) Could not resolve host: httpbin.istio-lab.svc.cluster.local "   
+Edit  /etc/resolv.conf
+```
+# file located in  /etc/resolv.conf
+search cluster.local
+nameserver 10.96.0.10
+
+```
 
 ### Test the httpbin service internally using http that outputs an IP
 ```
