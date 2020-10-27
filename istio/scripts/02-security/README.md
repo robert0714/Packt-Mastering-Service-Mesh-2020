@@ -295,7 +295,7 @@ kubectl -n istio-system create secret generic httpbin-keys --from-file=key=$HOME
 ### Modify gateway definition to change TLS mode from SIMPLE to MUTUAL
 
 ```
-cd ~/istio/scripts/02-security/
+cd   ~/servicemeshbook/istio/scripts/02-security/
 cat 04-add-mutual-TLS-to-bookinfo-https-to-mygateway.yaml
 kubectl -n istio-system apply -f 04-add-mutual-TLS-to-bookinfo-https-to-mygateway.yaml
 ```
