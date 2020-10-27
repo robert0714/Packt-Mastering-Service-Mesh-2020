@@ -500,8 +500,8 @@ kubectl -n istio-lab get sa
 
 ### Grant ServiceRoleBinding to a service account of productpage
 ```
-cat kubectl -n istio-lab apply -f 16-apply-service-role-binding-details-reviews.yaml
-kubectl -n istio-lab apply -f kubectl -n istio-lab apply -f 16-apply-service-role-binding-details-reviews.yaml
+cat  16-apply-service-role-binding-details-reviews.yaml
+kubectl -n istio-lab apply -f   16-apply-service-role-binding-details-reviews.yaml
 ```
 
 ### Check istioctl auth validate command
