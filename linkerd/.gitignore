@@ -1,0 +1,13 @@
+**/desktop.ini
+**/.DS_Store
+**/.DS_Store?
+**/.Trashes
+**/Icon?
+**/Thumbs.db
+**/*.swp
+**/*.bak
+**/*.tmp
+**/.project
+**/.idea/
+**/*.tmproj
+**/.vscode/
